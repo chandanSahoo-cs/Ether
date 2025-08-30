@@ -3,7 +3,7 @@ import { parseRESP } from "./lib/resp-parser";
 import { commands } from "./utils/command-handlers";
 import { errorString } from "./utils/resp-helpers";
 
-console.log("Starting Aero server...");
+console.log("Starting Ether server...");
 
 const server: net.Server = net.createServer((connection: net.Socket) => {
   console.log("Client connected");
