@@ -38,7 +38,7 @@ const server: net.Server = net.createServer((connection: net.Socket) => {
         }
       } else if (cmd === "GET") {
           console.log("KEY: ",args);
-        if (args.length < 1) {
+        if (args.length >= 1) {
           const key = args[0];
           if (store.has(key)) {
             const value = store.get(key)!;
