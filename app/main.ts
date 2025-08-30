@@ -16,8 +16,8 @@ const server: net.Server = net.createServer((connection: net.Socket) => {
       connection.write("+PONG\r\n");
     } else if (message.includes("ECHO")) {
       const parts = message.split("\r\n");
-      const echoArg = parts[parts.length - 2] || "";
-      
+      const echoArg = parts[parts.length - 1] || "";
+
       connection.write(`$${echoArg.length}\r\n${echoArg}\r\n`);
     } else {
       connection.write("-ERR unknown command\r\n");
