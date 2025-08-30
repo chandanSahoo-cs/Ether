@@ -14,16 +14,21 @@ const server: net.Server = net.createServer((connection: net.Socket) => {
 
     if (message.includes("PING")) {
       connection.write("+PONG\r\n");
+    } else if (message.includes("ECHO")) {
+      const parts = message.split("\r\n");
+      const echoArg = parts[parts.length - 2] || "";
+      
+      connection.write(`$${echoArg.length}\r\n${echoArg}\r\n`);
     } else {
       connection.write("-ERR unknown command\r\n");
     }
   });
 
-  connection.on("end",()=>{
+  connection.on("end", () => {
     console.log("Client disconnected");
-  })
+  });
 });
 //
-server.listen(6379, "127.0.0.1",()=>{
-    console.log("Server listening on 127.0.0.1:6379")
+server.listen(6379, "127.0.0.1", () => {
+  console.log("Server listening on 127.0.0.1:6379");
 });
