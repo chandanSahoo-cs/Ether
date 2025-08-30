@@ -14,6 +14,7 @@ const server: net.Server = net.createServer((connection: net.Socket) => {
     const message = data.toString().trim();
 
     console.log("Raw received: ", JSON.stringify(message));
+    console.log(store);
 
     try {
       const command = parseRESP(message);
@@ -38,8 +39,10 @@ const server: net.Server = net.createServer((connection: net.Socket) => {
       } else if (cmd === "GET") {
         if (args.length < 1) {
           const key = args[0];
+          console.log("KEY: ",key);
           if (store.has(key)) {
             const value = store.get(key)!;
+            console.log(value)
             connection.write(`$${value.length}\r\n${value}\r\n`);
           } else {
             connection.write("$-1\r\n");
