@@ -4,7 +4,7 @@ import { parseRESP } from "./lib/resp-parser";
 // You can use print statements as follows for debugging, they'll be visible when running tests.
 console.log("Starting Aero server...");
 
-const store = new Map<string, string>();
+const store = new Map<string, { value: string; expiry: number | undefined }>();
 
 // Uncomment this block to pass the first stage
 const server: net.Server = net.createServer((connection: net.Socket) => {
@@ -32,21 +32,39 @@ const server: net.Server = net.createServer((connection: net.Socket) => {
         if (args.length < 2) {
           connection.write("-ERR wrong number of arguments for 'SET'\r\n");
         } else {
-          const [key, value] = args;
-          store.set(key, value);
+          const [key, value, opt, optVal] = args;
+          let expiry: number | undefined;
+
+          if (opt && opt.toUpperCase() === "PX" && optVal) {
+            const ms = parseInt(optVal, 10);
+            if (isNaN(ms)) {
+              connection.write("-ERR invalid PX value\r\n");
+              return;
+            }
+            expiry = Date.now() + ms;
+          }
+          store.set(key, { value, expiry });
           connection.write("+OK\r\n");
         }
       } else if (cmd === "GET") {
-          console.log("KEY: ",args);
         if (args.length >= 1) {
-          const key = args[0];
-          if (store.has(key)) {
-            const value = store.get(key)!;
-            console.log(value)
-            connection.write(`$${value.length}\r\n${value}\r\n`);
-          } else {
+          const [key] = args;
+
+          const entry = store.get(key);
+
+          if (!entry) {
             connection.write("$-1\r\n");
+            return;
           }
+
+          if (entry.expiry && Date.now() > entry.expiry) {
+            store.delete(key);
+            connection.write("$-1\r\n");
+            return;
+          }
+
+          const value = entry.value;
+          connection.write(`$${value.length}\r\n${value}\r\n`);
         }
       } else {
         connection.write("-ERR unknown commands\r\n");
