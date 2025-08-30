@@ -1,4 +1,5 @@
 import * as net from "net";
+import { parseRESP } from "./lib/resp-parser";
 
 // You can use print statements as follows for debugging, they'll be visible when running tests.
 console.log("Starting Aero server...");
@@ -10,17 +11,25 @@ const server: net.Server = net.createServer((connection: net.Socket) => {
   connection.on("data", (data: Buffer) => {
     const message = data.toString().trim();
 
-    console.log("Received: ", JSON.stringify(message));
+    console.log("Raw received: ", JSON.stringify(message));
 
-    if (message.includes("PING")) {
-      connection.write("+PONG\r\n");
-    } else if (message.includes("ECHO")) {
-      const parts = message.split("\r\n");
-      const echoArg = parts[parts.length - 1] || "";
+    try{
+        const command = parseRESP(message);
+        console.log("Parse command: ", command);
 
-      connection.write(`$${echoArg.length}\r\n${echoArg}\r\n`);
-    } else {
-      connection.write("-ERR unknown command\r\n");
+        let [cmd,arg] = command;
+        cmd =cmd.toUpperCase();
+
+        if(cmd === "PING"){
+            connection.write("+PONG\r\n");
+        }else if(cmd === "ECHO"){
+            const str = arg || "";
+            connection.write(`$${arg.length}\r\n${arg}\r\n`)
+        }else {
+            connection.write("-ERR unknown commands\r\n");
+        }
+    }catch(err){
+        connection.write(`-ERR parsing command :: ${err}\r\n`);
     }
   });
 
